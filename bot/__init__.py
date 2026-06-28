@@ -5,6 +5,27 @@
 # lk21's bypasser.py generates URLs from regex patterns and parses them with urlparse.
 # Python 3.12+ raises ValueError("Invalid IPv6 URL") for malformed brackets.
 # Override _check_bracketed_netloc to silently accept any input.
+# Provide pkg_resources module shim if not installed
+# lk21 package uses pkg_resources.parse_version which is unavailable on Python 3.12+
+# minimal base images without setuptools. We create a minimal stub.
+import sys as _sys
+import types as _types
+if 'pkg_resources' not in _sys.modules:
+    _fake_pkg_resources = _types.ModuleType('pkg_resources')
+    try:
+        from packaging.version import parse as _pkg_parse_version
+    except ImportError:
+        try:
+            from importlib.metadata import version as _im_version
+            _pkg_parse_version = lambda v: v
+        except ImportError:
+            _pkg_parse_version = lambda v: v
+    _fake_pkg_resources.parse_version = _pkg_parse_version
+    _fake_pkg_resources.get_distribution = lambda pkg: _types.SimpleNamespace(version='0.0.0')
+    _fake_pkg_resources.DistributionNotFound = Exception
+    _fake_pkg_resources.working_set = []
+    _sys.modules['pkg_resources'] = _fake_pkg_resources
+
 import urllib.parse as _urllib_parse
 _urllib_parse._check_bracketed_netloc = lambda netloc: None
 
