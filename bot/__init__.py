@@ -867,16 +867,14 @@ if False and BASE_URL:
         shell=True,
     )
 
-# Disabled qbittorrent + aria2c subprocess startup (memory optimization for Heroku Standard-2X)
-# Bot will start qbittorrent/aria2c on-demand if download commands are used
-# srun(["qbittorrent-nox", "-d", f"--profile={getcwd()}"])
+srun(["qbittorrent-nox", "-d", f"--profile={getcwd()}"])
 if not ospath.exists(".netrc"):
     with open(".netrc", "w"):
         pass
 srun(["chmod", "600", ".netrc"])
 srun(["cp", ".netrc", "/root/.netrc"])
-# srun(["chmod", "+x", "aria.sh"])
-# srun("./aria.sh", shell=True)
+srun(["chmod", "+x", "aria.sh"])
+srun("./aria.sh", shell=True)
 if ospath.exists("accounts.zip"):
     if ospath.exists("accounts"):
         srun(["rm", "-rf", "accounts"])
