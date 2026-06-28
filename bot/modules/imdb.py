@@ -16,7 +16,23 @@ from bot.helper.telegram_helper.message_utils import sendMessage, editMessage
 from bot.helper.ext_utils.bot_utils import get_readable_time
 from bot.helper.telegram_helper.button_build import ButtonMaker
 
-imdb = Cinemagoer()
+# Lazy-load Cinemagoer to save memory at startup (Heroku Basic 512MB limit)
+_imdb_instance = None
+class _LazyCinemagoer:
+    def __getattr__(self, name):
+        global _imdb_instance
+        if _imdb_instance is None:
+            try:
+                from imdb import Cinemagoer
+                _imdb_instance = Cinemagoer()
+            except Exception as e:
+                from bot import LOGGER
+                LOGGER.warning(f"Cinemagoer unavailable: {e}. IMDb lookups disabled.")
+                _imdb_instance = False
+        if _imdb_instance is False:
+            raise RuntimeError("IMDb lookup unavailable")
+        return getattr(_imdb_instance, name)
+imdb = _LazyCinemagoer()
 
 IMDB_GENRE_EMOJI = {
     "Action": "🚀",
