@@ -3,7 +3,21 @@ import platform
 from base64 import b64encode
 from datetime import datetime
 from os import path as ospath
-from pkg_resources import get_distribution, DistributionNotFound
+# Use importlib.metadata (Python 3.8+ stdlib) instead of pkg_resources
+# pkg_resources requires setuptools and is deprecated in Python 3.12+
+try:
+    from importlib.metadata import version as _pkg_version
+    from importlib.metadata import PackageNotFoundError as DistributionNotFound
+    from types import SimpleNamespace
+
+    def get_distribution(pkg):
+        try:
+            return SimpleNamespace(version=_pkg_version(pkg))
+        except DistributionNotFound:
+            raise
+except ImportError:
+    # Fallback for older Python (shouldn't happen on 3.12+)
+    from pkg_resources import get_distribution, DistributionNotFound
 from aiofiles import open as aiopen
 from aiofiles.os import remove as aioremove, path as aiopath, mkdir
 from re import match as re_match
