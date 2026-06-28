@@ -14,7 +14,20 @@ from lxml.etree import HTML
 from requests import Session, session as req_session, post
 from urllib.parse import parse_qs, quote, unquote, urlparse, urljoin
 from cloudscraper import create_scraper
-from lk21 import Bypass
+# Lazy-load lk21 to fit Heroku Basic 512MB (loads 100+ extractors at import)
+class _LazyBypass:
+    def __new__(cls, *args, **kwargs):
+        try:
+            from lk21 import Bypass as _RealBypass
+            return _RealBypass(*args, **kwargs)
+        except Exception as e:
+            try:
+                from bot import LOGGER
+                LOGGER.warning(f"lk21 unavailable: {e}")
+            except Exception:
+                pass
+            raise
+Bypass = _LazyBypass
 from http.cookiejar import MozillaCookieJar
 
 from bot import LOGGER, config_dict
