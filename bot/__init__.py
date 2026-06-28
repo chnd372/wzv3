@@ -26,6 +26,21 @@ if 'pkg_resources' not in _sys.modules:
     _fake_pkg_resources.working_set = []
     _sys.modules['pkg_resources'] = _fake_pkg_resources
 
+# Monkey-patch sqlalchemy.create_engine for older 'sqlite://' URIs
+# Cinemagoer package builds URIs like 'sqlite://cinemagoer.db' (only 2 slashes)
+# but SQLAlchemy 2.x requires 'sqlite:///cinemagoer.db' (3 slashes for relative paths).
+import sqlalchemy as _sqlalchemy
+_orig_create_engine = _sqlalchemy.create_engine
+def _patched_create_engine(_url, *args, **kwargs):
+    if isinstance(_url, str) and _url.startswith('sqlite://') and not _url.startswith('sqlite:///'):
+        _url = 'sqlite:///' + _url[len('sqlite://'):]
+    return _orig_create_engine(_url, *args, **kwargs)
+_sqlalchemy.create_engine = _patched_create_engine
+try:
+    _sqlalchemy.engine.create.create_engine = _patched_create_engine
+except AttributeError:
+    pass
+
 import urllib.parse as _urllib_parse
 _urllib_parse._check_bracketed_netloc = lambda netloc: None
 
