@@ -892,7 +892,15 @@ else:
     for k, v in list(qb_opt.items()):
         if v in ["", "*"]:
             del qb_opt[k]
-    qb_client.app_set_preferences(qb_opt)
+        # Skip WebUI auth fields - qBittorrent rejects passwords < 6 chars
+        # and we don't want bot settings to override the auto-generated secure password
+        elif k.startswith("WebUI\\Password") or k == "WebUI\\Username":
+            del qb_opt[k]
+    try:
+        qb_client.app_set_preferences(qb_opt)
+    except Exception as e:
+        log_warning(f"Failed to apply some qBittorrent preferences: {e}")
+        log_info("Continuing with default qBittorrent settings")
 
 log_info("Creating client from BOT_TOKEN")
 bot = wztgClient(
