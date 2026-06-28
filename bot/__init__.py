@@ -860,10 +860,11 @@ if ospath.exists("shorteners.txt"):
             if len(temp) == 2:
                 shorteners_list.append({"domain": temp[0], "api_key": temp[1]})
 
-# Disable gunicorn on Heroku to save memory (Standard-2X OOM prevention)
-if False and BASE_URL:
+# Heroku web dyno REQUIRES binding to $PORT, otherwise Heroku kills dyno after ~20s
+_heroku_port = environ.get("PORT", "8080")
+if BASE_URL or _heroku_port:
     Popen(
-        f"gunicorn web.wserver:app --bind 0.0.0.0:{BASE_URL_PORT} --worker-class gevent",
+        f"gunicorn web.wserver:app --bind 0.0.0.0:{_heroku_port} --worker-class sync --workers 1 --timeout 30",
         shell=True,
     )
 
