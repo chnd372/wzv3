@@ -1,4 +1,16 @@
 #!/usr/bin/env python3
+# Monkey-patch re module for Python 3.12+ compatibility
+# lk21's vendored exrex.py uses re.sre_parse and re.U which were removed in Python 3.12+
+import re as _re
+if not hasattr(_re, 'sre_parse'):
+    try:
+        from re import _parser as _sre_parse
+        _re.sre_parse = _sre_parse
+    except ImportError:
+        pass
+if not hasattr(_re, 'U'):
+    _re.U = _re.UNICODE
+
 import asyncio
 from uvloop import install as _install_uvloop
 
